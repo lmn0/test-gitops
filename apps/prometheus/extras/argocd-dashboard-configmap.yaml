@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-overview-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  argocd-overview.json: |
+    {
+      "title": "Argo CD Overview",
+      "uid": "argocd-overview",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Applications by Sync Status",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (sync_status) (argocd_app_info)",
+              "legendFormat": "{{sync_status}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Applications by Health Status",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (health_status) (argocd_app_info)",
+              "legendFormat": "{{health_status}}"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Component Availability",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+          "targets": [
+            {
+              "expr": "up{namespace=\"argocd\", job=~\"argocd-.*\"}",
+              "legendFormat": "{{job}}"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Sync Operations (rate, 5m)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum by (phase) (rate(argocd_app_sync_total[5m]))",
+              "legendFormat": "{{phase}}"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "App Reconciliation Queue Depth",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            {
+              "expr": "workqueue_depth{namespace=\"argocd\", name=\"app_reconciliation_queue\"}",
+              "legendFormat": "queue depth"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Repo-Server gRPC Request Duration (p99)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, grpc_method) (rate(grpc_server_handling_seconds_bucket{namespace=\"argocd\", grpc_service=\"repository.RepoServerService\"}[5m])))",
+              "legendFormat": "{{grpc_method}}"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Repo-Server gRPC Error Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_handled_total{namespace=\"argocd\", grpc_service=\"repository.RepoServerService\", grpc_code!=\"OK\"}[5m])) / sum(rate(grpc_server_handled_total{namespace=\"argocd\", grpc_service=\"repository.RepoServerService\"}[5m]))",
+              "legendFormat": "error ratio"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Cluster Connections",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 24 },
+          "targets": [
+            {
+              "expr": "argocd_cluster_info",
+              "legendFormat": "{{server}}"
+            }
+          ]
+        }
+      ]
+    }

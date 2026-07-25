@@ -1,0 +1,41 @@
+# apps/argocd/application.yaml
+#
+# Argo CD manages itself: this Application installs/upgrades Argo CD using the upstream
+# argo-helm chart, but with values sourced from THIS git repo. Because this Application
+# lives in the same repo tree that app-of-apps watches, any change to values.yaml (new
+# RBAC policy, new repo credential template, resource bump, the helm-binary override
+# below, an Argo CD version bump, etc.) is picked up automatically the same way any other
+# app in the tree would be — Argo CD reconciles its own control plane via GitOps rather
+# than being hand-patched with kubectl/helm upgrade.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 7.7.11          # pin a known-good chart version; bump deliberately
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/apps/argocd/values.yaml
+    - repoURL: https://github.com/lmn0/test-gitops.git   # <-- replace with your repo URL
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true          # CRDs from the chart are large; SSA avoids the 3-way merge annotation limit

@@ -1,0 +1,109 @@
+# apps/argocd/values.yaml
+# Values for the upstream argo-helm/argo-cd chart, referenced by apps/argocd/application.yaml
+
+global:
+  # Standard labels so Prometheus/ServiceMonitors and dashboards can select these workloads
+  additionalLabels:
+    app.kubernetes.io/part-of: argocd
+
+## ---------------------------------------------------------------------------
+## Requirement 2 support: expose Prometheus metrics + create ServiceMonitors
+## for every Argo CD component so kube-prometheus-stack's Prometheus picks
+## them up automatically (Prometheus Operator selects ServiceMonitors via
+## label, configured on the Prometheus side in apps/prometheus/values.yaml).
+## ---------------------------------------------------------------------------
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  ## -------------------------------------------------------------------------
+  ## Requirement 3: replace the Helm binary bundled in the Argo CD image with
+  ## Helm 3.7.2 for the repo-server (the component that actually shells out to
+  ## `helm template`/`helm show` when rendering Helm sources).
+  ##
+  ## How it works:
+  ##  1. An initContainer runs before repo-server starts. It downloads the
+  ##     official static helm-v3.7.2-linux-amd64 release tarball and extracts
+  ##     the `helm` binary into an emptyDir volume shared with the main
+  ##     container ("custom-tools").
+  ##  2. The main repo-server container mounts that single file with subPath
+  ##     directly on top of /usr/local/bin/helm — the exact path the stock
+  ##     image already ships helm at — so nothing else about the image, PATH,
+  ##     or Argo CD's tool-detection logic has to change. Argo CD invokes
+  ##     `helm` and gets 3.7.2, not the version baked into the base image.
+  ##  3. This is Argo CD's officially documented "custom tooling" pattern
+  ##     (https://argo-cd.readthedocs.io/en/stable/operator-manual/custom_tools/),
+  ##     applied here specifically to pin Helm's major.minor to 3.7 rather than
+  ##     add a brand-new tool.
+  ##
+  ## See custom-image/ for an alternative (build-time) approach that bakes the
+  ## same binary into a custom repo-server image instead of an initContainer,
+  ## discussed in the top-level README.
+  ## -------------------------------------------------------------------------
+  volumes:
+    - name: custom-tools
+      emptyDir: {}
+
+  initContainers:
+    - name: download-helm-3-7
+      image: alpine:3.19
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -eux
+          apk add --no-cache curl tar
+          curl -fsSL https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+          tar -xzf /tmp/helm.tar.gz -C /tmp
+          mv /tmp/linux-amd64/helm /custom-tools/helm
+          chmod +x /custom-tools/helm
+      volumeMounts:
+        - name: custom-tools
+          mountPath: /custom-tools
+
+  volumeMounts:
+    - name: custom-tools
+      mountPath: /usr/local/bin/helm
+      subPath: helm
+
+## ---------------------------------------------------------------------------
+## Redis + ApplicationSet metrics, for completeness on the dashboards
+## ---------------------------------------------------------------------------
+redis:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+applicationSet:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+notifications:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+## RBAC / project baseline kept minimal here; extend per your org's policy.
+configs:
+  cm:
+    # Explicitly document the pinned Helm version for anyone reading Argo CD's own config
+    helm.valuesFileSchemaValidation: "true"
+  params:
+    server.insecure: "true"   # simplifies bootstrap; put TLS/ingress config here for real environments

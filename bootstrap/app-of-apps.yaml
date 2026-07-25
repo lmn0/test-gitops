@@ -1,0 +1,43 @@
+# bootstrap/app-of-apps.yaml
+#
+# This is the ONLY object you ever apply by hand (`kubectl apply -f bootstrap/app-of-apps.yaml`).
+# Everything downstream of it — Argo CD's own install and Prometheus — is reconciled by Argo CD
+# itself once this Application exists. This is what makes Argo CD "manage its own lifecycle":
+# it is simply another Application in the tree it controls.
+#
+# The -10 sync-wave means: when this Application's own resources are evaluated for ordering
+# against sibling top-level Applications (e.g. if you later add more roots under the same
+# ApplicationSet/parent, or promote this into a Application-of-Applications with multiple
+# waves), this one is guaranteed to be reconciled first, before wave 0 (the default) and any
+# positive wave. In this repo it's the single root, so the practical effect is: the child
+# Applications it creates (argocd, prometheus) are themselves annotated with their own waves
+# (0 and 1 respectively) so that Argo CD finishes reconciling/self-managing before Prometheus
+# is deployed to monitor it.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+  finalizers:
+    # ensures child Applications are deleted (cascade) if this root Application is ever removed
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR-ORG/gitops-argocd.git   # <-- replace with your repo URL
+    targetRevision: main
+    path: apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
