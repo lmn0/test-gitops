@@ -26,7 +26,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR-ORG/gitops-argocd.git   # <-- replace with your repo URL
+    repoURL: https://github.com/lmn0/test-gitops.git   # <-- replace with your repo URL
     targetRevision: main
     path: apps
     directory:
