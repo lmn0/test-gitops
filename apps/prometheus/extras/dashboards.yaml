@@ -1,0 +1,46 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack   # must match Prometheus CR's ruleSelector
+spec:
+  groups:
+    - name: argocd.rules
+      rules:
+        - alert: ArgoCDAppNotSynced
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD app {{ $labels.name }} is out of sync"
+            description: "Application {{ $labels.name }} in namespace {{ $labels.namespace }} has been out of sync for 15+ minutes."
+
+        - alert: ArgoCDAppNotHealthy
+          expr: argocd_app_info{health_status!="Healthy"} == 1
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Argo CD app {{ $labels.name }} unhealthy"
+            description: "Application {{ $labels.name }} health status is {{ $labels.health_status }}."
+
+        - alert: ArgoCDControllerHighReconcileTime
+          expr: histogram_quantile(0.95, sum(rate(argocd_app_reconcile_bucket[5m])) by (le)) > 30
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD reconcile latency high"
+            description: "95th percentile app reconcile time is above 30s."
+
+        - alert: ArgoCDServerDown
+          expr: up{job="argocd-server-metrics"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Argo CD API server metrics endpoint down"
+            description: "Prometheus can't scrape argocd-server-metrics for 5+ minutes."
