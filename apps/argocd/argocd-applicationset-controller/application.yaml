@@ -1,18 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-  creationTimestamp: "2026-07-25T01:35:09Z"
-  generation: 1
   labels:
     app.kubernetes.io/component: applicationset-controller
     app.kubernetes.io/name: argocd-applicationset-controller
     app.kubernetes.io/part-of: argocd
   name: argocd-applicationset-controller
   namespace: argocd
-  resourceVersion: "1784943326524223014"
-  uid: bb77674b-a6a2-4495-a6ca-5fb5f18f117f
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -332,24 +326,3 @@ spec:
           name: argocd-cmd-params-cm
           optional: true
         name: argocd-cmd-params-cm
-status:
-  availableReplicas: 1
-  conditions:
-  - lastTransitionTime: "2026-07-25T01:35:26Z"
-    lastUpdateTime: "2026-07-25T01:35:26Z"
-    message: Deployment has minimum availability.
-    reason: MinimumReplicasAvailable
-    status: "True"
-    type: Available
-  - lastTransitionTime: "2026-07-25T01:35:10Z"
-    lastUpdateTime: "2026-07-25T01:35:26Z"
-    message: ReplicaSet "argocd-applicationset-controller-fb85f95b8" has successfully
-      progressed.
-    reason: NewReplicaSetAvailable
-    status: "True"
-    type: Progressing
-  observedGeneration: 1
-  readyReplicas: 1
-  replicas: 1
-  terminatingReplicas: 0
-  updatedReplicas: 1

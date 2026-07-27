@@ -2,11 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    deployment.kubernetes.io/revision: "1"
     meta.helm.sh/release-name: prometheus-stack
     meta.helm.sh/release-namespace: monitoring
-  creationTimestamp: "2026-07-26T00:33:47Z"
-  generation: 1
   labels:
     app: kube-prometheus-stack-operator
     app.kubernetes.io/component: prometheus-operator
@@ -20,8 +17,6 @@ metadata:
     release: prometheus-stack
   name: prometheus-stack-kube-prom-operator
   namespace: monitoring
-  resourceVersion: "1785026035840751018"
-  uid: 9c4e6bad-d2b9-4dc3-bac6-d2ae783f6c9f
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -127,24 +122,3 @@ spec:
         secret:
           defaultMode: 420
           secretName: prometheus-stack-kube-prom-admission
-status:
-  availableReplicas: 1
-  conditions:
-  - lastTransitionTime: "2026-07-26T00:33:55Z"
-    lastUpdateTime: "2026-07-26T00:33:55Z"
-    message: Deployment has minimum availability.
-    reason: MinimumReplicasAvailable
-    status: "True"
-    type: Available
-  - lastTransitionTime: "2026-07-26T00:33:47Z"
-    lastUpdateTime: "2026-07-26T00:33:55Z"
-    message: ReplicaSet "prometheus-stack-kube-prom-operator-59b84fc45c" has successfully
-      progressed.
-    reason: NewReplicaSetAvailable
-    status: "True"
-    type: Progressing
-  observedGeneration: 1
-  readyReplicas: 1
-  replicas: 1
-  terminatingReplicas: 0
-  updatedReplicas: 1

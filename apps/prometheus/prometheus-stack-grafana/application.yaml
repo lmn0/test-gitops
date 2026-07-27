@@ -1,12 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-    meta.helm.sh/release-name: prometheus-stack
-    meta.helm.sh/release-namespace: monitoring
-  creationTimestamp: "2026-07-26T00:33:47Z"
-  generation: 1
   labels:
     app.kubernetes.io/instance: prometheus-stack
     app.kubernetes.io/managed-by: Helm
@@ -15,8 +9,6 @@ metadata:
     helm.sh/chart: grafana-12.8.0
   name: prometheus-stack-grafana
   namespace: monitoring
-  resourceVersion: "1785026101929567004"
-  uid: 763888af-12ff-4eb6-a924-6d01b1eab5ad
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -33,9 +25,6 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 5bceeca3808849664f09f642547ce17fdf495522238ef9ce952b20cfa36b7de5
-        checksum/sc-dashboard-provider-config: e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24
-        checksum/secret: 667ba3a5f9c7832ff9690fe00c5c429525a1c82d57c3ee14da2b29fbe8868e06
         kubectl.kubernetes.io/default-container: grafana
       labels:
         app.kubernetes.io/instance: prometheus-stack
@@ -246,23 +235,3 @@ spec:
         name: sc-dashboard-provider
       - emptyDir: {}
         name: sc-datasources-volume
-status:
-  availableReplicas: 1
-  conditions:
-  - lastTransitionTime: "2026-07-26T00:35:01Z"
-    lastUpdateTime: "2026-07-26T00:35:01Z"
-    message: Deployment has minimum availability.
-    reason: MinimumReplicasAvailable
-    status: "True"
-    type: Available
-  - lastTransitionTime: "2026-07-26T00:33:47Z"
-    lastUpdateTime: "2026-07-26T00:35:01Z"
-    message: ReplicaSet "prometheus-stack-grafana-55697c7787" has successfully progressed.
-    reason: NewReplicaSetAvailable
-    status: "True"
-    type: Progressing
-  observedGeneration: 1
-  readyReplicas: 1
-  replicas: 1
-  terminatingReplicas: 0
-  updatedReplicas: 1
