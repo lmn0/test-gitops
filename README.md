@@ -57,6 +57,17 @@ kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingre
 kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
 
+Grafana will fail to start as the secret is not in the gitops repository. Generate a secret and apply it.
+```bash
+kubectl create secret generic kube-prometheus-stack-grafana \
+  --namespace monitoring \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$(openssl rand -base64 24)" \
+  --dry-run=client -o yaml > secret.yaml
+
+  kubectl apply -f secret.yaml
+```
+
 Obtain the 'admin' password for the newly set up ArgoCD and Grafana web portal:
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
