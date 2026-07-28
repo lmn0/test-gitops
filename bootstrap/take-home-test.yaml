@@ -17,7 +17,7 @@ spec:
       chart: kube-prometheus-stack
       targetRevision: 65.5.1
       helm:
-        releaseName: prometheus-stack
+        releaseName: kube-prometheus-stack
         values: |
           grafana:
             sidecar:
