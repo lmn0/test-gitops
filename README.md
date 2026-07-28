@@ -69,20 +69,42 @@ resources owned by `take-home-test`, sourced from this repo.
 
 ## 2. Prometheus deployed and configured to monitor Argo CD
 
-- `apps/prometheus/` deploys kube-prometheus-stack (Prometheus Operator, Grafana,
-  kube-state-metrics) via the same directory-recursion pattern.
-- `apps/prometheus/extras/argocd-svcmon.yaml` — one `ServiceMonitor` per Argo CD
-  component's metrics Service (`argocd-metrics`, `argocd-server-metrics`,
-  `argocd-repo-server` metrics port, `argocd-applicationset-controller` metrics port,
-  `argocd-notifications-controller-metrics`), each with `namespaceSelector.matchNames:
-  [argocd]` so Prometheus (running in `monitoring`) can discover Services in a different
-  namespace.
-- `apps/prometheus/extras/argocd-alert-rules.yaml` — a `PrometheusRule` alerting on
-  out-of-sync apps, unhealthy apps, and component downtime (`up == 0` per Argo CD
-  ServiceMonitor job).
-- `apps/prometheus/extras/argocd-dashboard-cm.yaml` — a Grafana dashboard ConfigMap
-  labeled `grafana_dashboard: "1"`, auto-imported by the kube-prometheus-stack Grafana
-  sidecar with no manual dashboard import step.
+- `apps/kube-prometheus-stack/` deploys kube-prometheus-stack (Prometheus Operator,
+  Prometheus, Alertmanager, Grafana, kube-state-metrics) via the same directory-recursion
+  pattern as `apps/argocd/` — plain rendered manifests under `templates/` and `charts/`,
+  applied directly by `app-of-apps`, not a `Application`/`kustomization.yaml` wrapper.
+- The chart's own CRDs (`ServiceMonitor`, `PrometheusRule`, `Prometheus`, `Alertmanager`)
+  are **not** vendored in this path — `helm template` doesn't render a chart's `crds/`
+  folder unless `--include-crds` is passed, and this repo's manifests were rendered without
+  it. In practice these get installed via `helm install kube-prometheus-stack ...`
+  applying them automatically on first install; if you're standing this cluster up from
+  git alone, apply them explicitly first (`helm show crds prometheus-community/kube-prometheus-stack
+  --version <chart-version> | kubectl apply --server-side -f -`) or the `ServiceMonitor`/
+  `PrometheusRule` objects below will fail with "no matches for kind" until they exist.
+- `apps/kube-prometheus-stack/templates/exporters/argocd/argocd-svcmon.yaml` — one
+  `ServiceMonitor` per Argo CD component's metrics Service (`argocd-metrics`,
+  `argocd-server-metrics`, `argocd-repo-server` metrics port,
+  `argocd-applicationset-controller` metrics port, `argocd-notifications-controller-metrics`,
+  and `argocd-dex-server-metrics` if SSO via Dex is in use), each with
+  `namespaceSelector.matchNames: [argocd]` so Prometheus (running in `monitoring`) can
+  discover Services in a different namespace, and `selector.matchLabels` pinned to each
+  Service's `app.kubernetes.io/name` so the correct port gets scraped on Services that
+  expose more than one (e.g. repo-server's `server` vs `metrics` ports).
+  - **Label alignment matters here and is release-name-dependent.** Each ServiceMonitor
+    carries `release: <name>`, and Prometheus's `serviceMonitorSelector.matchLabels`
+    only picks up ServiceMonitors whose `release` label matches the Helm release name
+    Prometheus itself was installed under (`{{ .Release.Name }}` in the chart's default
+    values) — e.g. `release: prometheus-stack` if installed as `helm install prometheus-stack ...`,
+    or `release: kube-prometheus-stack` if installed as `helm install kube-prometheus-stack ...`.
+    A mismatch here doesn't error — the ServiceMonitor just silently never gets scraped.
+    Confirm the label here matches whichever release name is the actual source of truth
+    for this cluster before assuming Argo CD monitoring is live.
+- `apps/kube-prometheus-stack/templates/exporters/argocd/argocd-alert-rules.yaml` — a
+  `PrometheusRule` alerting on out-of-sync apps, unhealthy apps, and component downtime
+  (`up == 0` per Argo CD ServiceMonitor job).
+- `apps/kube-prometheus-stack/templates/exporters/argocd/argocd-dashboard-cm.yaml` — a
+  Grafana dashboard ConfigMap labeled `grafana_dashboard: "1"`, auto-imported by the
+  kube-prometheus-stack Grafana sidecar with no manual dashboard import step.
 
 ## 3. Helm binary replaced with 3.7.2
 
