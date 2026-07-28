@@ -12,6 +12,7 @@ metadata:
     app.kubernetes.io/version: "13.1.1"
 spec:
   type: ClusterIP
+  type: LoadBalancer
   ports:
     - name: http-web
       port: 80

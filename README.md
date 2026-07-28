@@ -52,8 +52,8 @@ Expose argocd server and prometheus as a loadbalancer to obtain external IP in G
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
-kubectl patch svc prometheus-stack-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl get svc prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl patch svc kube-prometheus-stack-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
 
 Obtain the password for the newly set up ArgoCD web portal:
