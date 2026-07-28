@@ -385,6 +385,8 @@ spec:
           name: var-files
       # --- Helm binary pin: downloads helm 3.7.2 into a shared emptyDir so the
       # main container can mount just the binary over /usr/local/bin/helm.
+      # Uses Alpine's built-in wget/tar (no apk add) so it never needs root,
+      # and runs as an explicit non-root UID that matches the pod's fsGroup.
       - name: download-helm-3-7-2
         image: alpine:3.20
         command:
@@ -392,10 +394,9 @@ spec:
         - -c
         - |
           set -e
-          apk add --no-cache curl
-          curl -fsSL -o /custom-bin/helm.tar.gz \
+          wget -qO /custom-bin/helm.tar.gz \
             https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz
-          tar -zxvf /custom-bin/helm.tar.gz -C /custom-bin
+          tar -zxf /custom-bin/helm.tar.gz -C /custom-bin
           mv /custom-bin/linux-amd64/helm /custom-bin/helm
           chmod +x /custom-bin/helm
           rm -rf /custom-bin/helm.tar.gz /custom-bin/linux-amd64
@@ -406,6 +407,7 @@ spec:
             - ALL
           readOnlyRootFilesystem: false
           runAsNonRoot: true
+          runAsUser: 1000
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
@@ -415,7 +417,8 @@ spec:
         kubernetes.io/os: linux
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
+      securityContext:
+        fsGroup: 1000
       serviceAccount: argocd-repo-server
       serviceAccountName: argocd-repo-server
       terminationGracePeriodSeconds: 30
@@ -466,29 +469,3 @@ spec:
       # and the main container's subPath mount.
       - name: custom-helm-bin
         emptyDir: {}
-      - name: download-helm-3-7-2
-        image: alpine:3.20
-        command:
-        - sh
-        - -c
-        - |
-          set -e
-          wget -qO /custom-bin/helm.tar.gz \
-            https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz
-          tar -zxf /custom-bin/helm.tar.gz -C /custom-bin
-          mv /custom-bin/linux-amd64/helm /custom-bin/helm
-          chmod +x /custom-bin/helm
-          rm -rf /custom-bin/helm.tar.gz /custom-bin/linux-amd64
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: false
-          runAsNonRoot: true
-          runAsUser: 1000
-          seccompProfile:
-            type: RuntimeDefault
-        volumeMounts:
-        - name: custom-helm-bin
-          mountPath: /custom-bin
