@@ -3,6 +3,8 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-metrics
   name: argocd-metrics
   namespace: monitoring
   labels:
@@ -22,6 +24,9 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: >-
+      app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-server-metrics
   name: argocd-server-metrics
   namespace: monitoring
   labels:
@@ -41,6 +46,9 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: >-
+      app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-repo-server-metrics
   name: argocd-repo-server-metrics
   namespace: monitoring
   labels:
@@ -60,6 +68,9 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: >-
+      app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-applicationset-controller-metrics
   name: argocd-applicationset-controller-metrics
   namespace: monitoring
   labels:
@@ -79,6 +90,9 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: >-
+      app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-notifications-controller-metrics
   name: argocd-notifications-controller-metrics
   namespace: monitoring
   labels:
@@ -98,6 +112,9 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: >-
+      app-of-apps:monitoring.coreos.com/ServiceMonitor:monitoring/argocd-dex-server-metrics
   name: argocd-dex-server-metrics
   namespace: monitoring
   labels:

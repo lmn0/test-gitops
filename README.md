@@ -42,8 +42,23 @@ any manual drift on the live cluster back to what's in git.
 
 ```bash
 kubectl create namespace argocd
+kubectl create namespace monitoring
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl apply -f bootstrap/app-of-apps.yaml
+```
+
+Expose argocd server and prometheus as a loadbalancer to obtain external IP in GCP environment. The external IP would take a few seconds to show up, give it some time.
+```bash
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+kubectl patch svc prometheus-stack-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl get svc prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+Obtain the password for the newly set up ArgoCD web portal:
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
 From that point on, Argo CD's own Deployments/StatefulSet (`argocd-server`,

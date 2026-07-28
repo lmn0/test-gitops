@@ -1,6 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: app-of-apps:apps/Deployment:monitoring/prometheus-stack-grafana
   labels:
     app.kubernetes.io/instance: prometheus-stack
     app.kubernetes.io/managed-by: Helm

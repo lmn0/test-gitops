@@ -1,6 +1,8 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: app-of-apps:monitoring.coreos.com/PrometheusRule:monitoring/argocd-alerts
   name: argocd-alerts
   namespace: monitoring
   labels:

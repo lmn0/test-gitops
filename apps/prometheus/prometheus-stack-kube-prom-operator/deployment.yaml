@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
+    argocd.argoproj.io/tracking-id: app-of-apps:apps/Deployment:monitoring/prometheus-stack-kube-prom-operator
     meta.helm.sh/release-name: prometheus-stack
     meta.helm.sh/release-namespace: monitoring
   labels:
