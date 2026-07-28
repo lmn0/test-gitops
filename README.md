@@ -2,13 +2,13 @@
 
 A GitOps repository that bootstraps Argo CD and makes Argo CD manage itself, monitor
 itself via Prometheus, and run a pinned Helm 3.7.2 binary — all reconciled through a
-single root `app-of-apps` Application.
+single root `take-home-test` Application.
 
 ## Repo layout
 
 ```
 bootstrap/
-  app-of-apps.yaml                     # the one manifest you kubectl apply by hand
+  take-home-test.yaml                     # the one manifest you kubectl apply by hand
 apps/
   argocd/
     argocd-server/application.yaml
@@ -29,12 +29,12 @@ apps/
 
 Each `application.yaml` under `apps/argocd/<component>/` is a raw Kubernetes manifest
 (Deployment or StatefulSet) for that one Argo CD component — not an Argo CD `Application`
-object, despite the filename. The root `app-of-apps` Application recursively discovers and
+object, despite the filename. The root `take-home-test` Application recursively discovers and
 applies every manifest under `apps/`, so no per-component `Application` wrapper is needed.
 
 ## 1. Argo CD manages its own configuration/lifecycle
 
-`bootstrap/app-of-apps.yaml` is a single Argo CD `Application` whose source is the `apps/`
+`bootstrap/take-home-test.yaml` is a single Argo CD `Application` whose source is the `apps/`
 directory in this repo, with `directory.recurse: true`. Once bootstrapped, it's the only
 manifest ever applied by hand — every Argo CD component manifest under `apps/argocd/` is
 discovered and reconciled automatically, and `syncPolicy.automated.selfHeal: true` reverts
@@ -44,7 +44,7 @@ any manual drift on the live cluster back to what's in git.
 kubectl create namespace argocd
 kubectl create namespace monitoring
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl apply -f bootstrap/app-of-apps.yaml
+kubectl apply -f bootstrap/take-home-test.yaml
 ```
 
 Expose argocd server and prometheus as a loadbalancer to obtain external IP in GCP environment. The external IP would take a few seconds to show up, give it some time.
@@ -56,15 +56,16 @@ kubectl patch svc kube-prometheus-stack-grafana -n monitoring -p '{"spec": {"typ
 kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
 
-Obtain the password for the newly set up ArgoCD web portal:
+Obtain the 'admin' password for the newly set up ArgoCD and Grafana web portal:
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 ```
 
 From that point on, Argo CD's own Deployments/StatefulSet (`argocd-server`,
 `argocd-repo-server`, `argocd-application-controller`, `argocd-applicationset-controller`,
 `argocd-notifications-controller`, `argocd-dex-server`, `argocd-redis`) are all managed as
-resources owned by `app-of-apps`, sourced from this repo.
+resources owned by `take-home-test`, sourced from this repo.
 
 ## 2. Prometheus deployed and configured to monitor Argo CD
 
