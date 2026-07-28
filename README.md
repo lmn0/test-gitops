@@ -62,12 +62,6 @@ Wait for a couple of minutes before bootstrapping the apps:
 kubectl apply -f bootstrap/take-home-test.yaml
 ```
 
-Once applied, give it a couple of minutes to make changes to argocd-server to be exposed as type LoadBalancer to get an external IP. View the external IP using the following commands. Give it a few minutes to show up.
-```bash
-kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
-kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
-```
-
 Grafana will fail to start as the secret is not in the gitops repository. Generate a secret and apply it.
 ```bash
 kubectl create secret generic kube-prometheus-stack-grafana \
@@ -76,10 +70,17 @@ kubectl create secret generic kube-prometheus-stack-grafana \
   --from-literal=admin-password="$(openssl rand -base64 24)" \
   --dry-run=client -o yaml > secret.yaml
 
-  kubectl apply -f secret.yaml
+kubectl apply -f secret.yaml
 ```
 
-Obtain the 'admin' password for the newly set up ArgoCD and Grafana web portal:
+Give it a couple of minutes to make changes to argocd-server to be exposed as type LoadBalancer to get an external IP. View the external IP using the following commands. Give it a few minutes to show up.
+```bash
+kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+
+Obtain the 'admin' password for the newly set up ArgoCD and Grafana web consoles:
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
