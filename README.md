@@ -73,12 +73,11 @@ kubectl create secret generic kube-prometheus-stack-grafana \
 kubectl apply -f secret.yaml
 ```
 
-Give it a couple of minutes to make changes to argocd-server to be exposed as type LoadBalancer to get an external IP. View the external IP using the following commands. Give it a few minutes to show up.
+Give it a couple of minutes to make changes to `argocd-server` and `kube-prometheus-stack-grafana` to be exposed as type LoadBalancer to get an external IP address for access. View the external IP using the following commands. Give it a few minutes to show up.
 ```bash
 kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
-
 
 Obtain the 'admin' password for the newly set up ArgoCD and Grafana web consoles:
 ```bash
