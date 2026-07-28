@@ -6,7 +6,7 @@ metadata:
   name: argocd-alerts
   namespace: monitoring
   labels:
-    release: prometheus-stack   # must match Prometheus CR's ruleSelector
+    release: kube-prometheus-stack   # must match Prometheus CR's ruleSelector
 spec:
   groups:
     - name: argocd.rules

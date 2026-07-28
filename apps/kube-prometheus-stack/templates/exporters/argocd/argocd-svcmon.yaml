@@ -8,7 +8,7 @@ metadata:
   name: argocd-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
@@ -30,7 +30,7 @@ metadata:
   name: argocd-server-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
@@ -52,7 +52,7 @@ metadata:
   name: argocd-repo-server-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
@@ -74,7 +74,7 @@ metadata:
   name: argocd-applicationset-controller-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
@@ -96,7 +96,7 @@ metadata:
   name: argocd-notifications-controller-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
@@ -118,7 +118,7 @@ metadata:
   name: argocd-dex-server-metrics
   namespace: monitoring
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
