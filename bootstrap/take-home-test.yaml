@@ -7,34 +7,15 @@ metadata:
     argocd.argoproj.io/sync-wave: "-10"
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/lmn0/test-gitops.git
-      targetRevision: main
-      path: apps
-      directory:
-        recurse: true
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 65.5.1
-      helm:
-        releaseName: kube-prometheus-stack
-        values: |
-          grafana:
-            sidecar:
-              dashboards:
-                enabled: true
-                label: grafana_dashboard
-                labelValue: "1"
-                searchNamespace: ALL
-          prometheus:
-            prometheusSpec:
-              serviceMonitorSelectorNilUsesHelmValues: false
-              serviceMonitorNamespaceSelector: {}
-              ruleSelectorNilUsesHelmValues: false
-              ruleNamespaceSelector: {}
+  source:
+    repoURL: https://github.com/lmn0/test-gitops.git
+    targetRevision: main
+    path: apps
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
