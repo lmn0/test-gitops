@@ -6,33 +6,44 @@ single root `take-home-test` Application.
 
 ## Repo layout
 
-```
 bootstrap/
-  take-home-test.yaml                     # the one manifest you kubectl apply by hand
+  take-home-test.yaml           # the one manifest you kubectl apply by hand
 apps/
   argocd/
-    argocd-server/application.yaml
-    argocd-repo-server/application.yaml
-    argocd-applicationset-controller/application.yaml
-    argocd-notifications-controller/application.yaml
-    argocd-dex-server/application.yaml
-    argocd-redis/application.yaml
-  prometheus/
-    prometheus-stack-kube-prom-operator/application.yaml
-    prometheus-stack-grafana/application.yaml
-    prometheus-stack-kube-state-metrics/application.yaml
-    extras/
-      argocd-svcmon.yaml               # ServiceMonitors for each Argo CD component
-      argocd-alert-rules.yaml          # PrometheusRule for Argo CD alerting
-      argocd-dashboard-cm.yaml         # Grafana dashboard ConfigMap
-```
+    crds/                       # Argo CD's own CRDs (Application, AppProject)
+    configmaps/                 # argocd-cm, argocd-rbac-cm, argocd-cmd-params-cm, etc.
+    secrets/                    # argocd-notifications-secret (no data — see note below)
+    deployments/                # one manifest per component: server, repo-server,
+                                 # applicationset-controller, notifications-controller,
+                                 # dex-server, redis
+    statefulsets/                # argocd-application-controller
+    services/                   # one per component, including metrics Services
+    rbac/
+      clusterroles/ clusterrolebindings/
+      roles/ rolebindings/
+      serviceaccounts/
+    networkpolicies/            # one per component
+  kube-prometheus-stack/
+    crds/crds.yaml               # Prometheus Operator CRDs (Prometheus, ServiceMonitor,
+                                 # PrometheusRule, Alertmanager, etc.)
+    charts/
+      grafana/templates/
+      kube-state-metrics/templates/
+      prometheus-node-exporter/templates/
+    templates/
+      prometheus-operator/
+      prometheus/                # Prometheus CR, rules-1.14/ (recording + alerting rules)
+      alertmanager/
+      grafana/                  # datasources, dashboards-1.14/ (stock Kubernetes dashboards)
+      exporters/                # per-target ServiceMonitors: kube-api-server, kube-etcd,
+                                 # kube-scheduler, kube-controller-manager, kube-proxy,
+                                 # kubelet, core-dns
+      exporters/argocd/
+        argocd-svcmon.yaml       # ServiceMonitors for every Argo CD component
+        argocd-alert-rules.yaml  # PrometheusRule: Argo CD sync/health/component-down alerts
+        argocd-dashboard-cm.yaml # Grafana dashboard ConfigMap for Argo CD
 
-Each `application.yaml` under `apps/argocd/<component>/` is a raw Kubernetes manifest
-(Deployment or StatefulSet) for that one Argo CD component — not an Argo CD `Application`
-object, despite the filename. The root `take-home-test` Application recursively discovers and
-applies every manifest under `apps/`, so no per-component `Application` wrapper is needed.
-
-## 1. Argo CD manages its own configuration/lifecycle
+## 1. Getting Started Steps  - install ArgoCD and deploy Prometheus; configure and manage both
 
 `bootstrap/take-home-test.yaml` is a single Argo CD `Application` whose source is the `apps/`
 directory in this repo, with `directory.recurse: true`. Once bootstrapped, it's the only
@@ -79,20 +90,8 @@ From that point on, Argo CD's own Deployments/StatefulSet (`argocd-server`,
 `argocd-notifications-controller`, `argocd-dex-server`, `argocd-redis`) are all managed as
 resources owned by `take-home-test`, sourced from this repo.
 
-## 2. Prometheus deployed and configured to monitor Argo CD
+## 2. Prometheus configured to monitor Argo CD
 
-- `apps/kube-prometheus-stack/` deploys kube-prometheus-stack (Prometheus Operator,
-  Prometheus, Alertmanager, Grafana, kube-state-metrics) via the same directory-recursion
-  pattern as `apps/argocd/` — plain rendered manifests under `templates/` and `charts/`,
-  applied directly by `app-of-apps`, not a `Application`/`kustomization.yaml` wrapper.
-- The chart's own CRDs (`ServiceMonitor`, `PrometheusRule`, `Prometheus`, `Alertmanager`)
-  are **not** vendored in this path — `helm template` doesn't render a chart's `crds/`
-  folder unless `--include-crds` is passed, and this repo's manifests were rendered without
-  it. In practice these get installed via `helm install kube-prometheus-stack ...`
-  applying them automatically on first install; if you're standing this cluster up from
-  git alone, apply them explicitly first (`helm show crds prometheus-community/kube-prometheus-stack
-  --version <chart-version> | kubectl apply --server-side -f -`) or the `ServiceMonitor`/
-  `PrometheusRule` objects below will fail with "no matches for kind" until they exist.
 - `apps/kube-prometheus-stack/templates/exporters/argocd/argocd-svcmon.yaml` — one
   `ServiceMonitor` per Argo CD component's metrics Service (`argocd-metrics`,
   `argocd-server-metrics`, `argocd-repo-server` metrics port,
