@@ -433,12 +433,49 @@ spec:
           name: tmp
         - mountPath: /home/argocd/params
           name: argocd-cmd-params-cm
+        # --- Helm binary pin: mount the 3.7.2 binary fetched by the
+        # download-helm-3-7-2 initContainer over the stock helm on PATH.
+        - mountPath: /usr/local/bin/helm
+          name: custom-helm-bin
+          subPath: helm
       dnsPolicy: ClusterFirst
+      initContainers:
+      # --- Helm binary pin: downloads helm 3.7.2 into a shared emptyDir so the
+      # main container can mount just the binary over /usr/local/bin/helm.
+      # Uses Alpine's built-in wget/tar (no apk add) so it never needs root,
+      # and runs as an explicit non-root UID matched by the pod's fsGroup.
+      - name: download-helm-3-7-2
+        image: alpine:3.20
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          wget -qO /custom-bin/helm.tar.gz \
+            https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz
+          tar -zxf /custom-bin/helm.tar.gz -C /custom-bin
+          mv /custom-bin/linux-amd64/helm /custom-bin/helm
+          chmod +x /custom-bin/helm
+          rm -rf /custom-bin/helm.tar.gz /custom-bin/linux-amd64
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - name: custom-helm-bin
+          mountPath: /custom-bin
       nodeSelector:
         kubernetes.io/os: linux
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
+      securityContext:
+        fsGroup: 1000
       serviceAccount: argocd-server
       serviceAccountName: argocd-server
       terminationGracePeriodSeconds: 30
@@ -485,3 +522,7 @@ spec:
           name: argocd-cmd-params-cm
           optional: true
         name: argocd-cmd-params-cm
+      # --- Helm binary pin: shared emptyDir between the download initContainer
+      # and the main container's subPath mount.
+      - name: custom-helm-bin
+        emptyDir: {}
