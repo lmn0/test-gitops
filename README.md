@@ -44,15 +44,16 @@ any manual drift on the live cluster back to what's in git.
 kubectl create namespace argocd
 kubectl create namespace monitoring
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+Wait for a couple of minutes before bootstrapping the apps:
+```bash
 kubectl apply -f bootstrap/take-home-test.yaml
 ```
 
-Expose argocd server and prometheus as a loadbalancer to obtain external IP in GCP environment. The external IP would take a few seconds to show up, give it some time.
+Once applied, give it a couple of minutes to make changes to argocd-server to be exposed as type LoadBalancer to get an external IP. View the external IP using the following commands. Give it a few minutes to show up.
 ```bash
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 kubectl get svc argocd-server -n argocd -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
-
-kubectl patch svc kube-prometheus-stack-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
 kubectl get svc kube-prometheus-stack-grafana -n monitoring -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
 
